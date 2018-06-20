@@ -61,16 +61,16 @@ export default {
                     }
                 }).catch(err => {
                     self.error(obj, '网络连接错误', '')
-                        // reject();
+                        reject();
                 });
         });
     },
     apiGet(obj, url, params = {}) {
         var self = this
-            // console.log(obj,url,params)
+            console.log(obj,url,params)
         return new Promise((resolve, reject) => {
-            // console.log(resolve,reject)
-            axios.get(this.baseUrl + url, { params })
+            axios.get(encodeURI(this.baseUrl + url), { params })
+            // axios.get('/opcweb/' + url, { params })
                 .then((res) => {
                     // console.log(res)
                     resolve(res.data)
@@ -115,8 +115,8 @@ export default {
             }
         })
     },
-    baseUrl: 'http://116.62.228.3:8080/opcweb/api/data/',
-    // baseUrl: 'http://localhost:8080/iws/api/',
+    baseUrl: 'http://111.61.241.172:10081/opcweb/api/data/',
+    // baseUrl: 'http://localhost:8080/opcweb/api/data/',
     setHeight: function(value) {
         var wh = document.body.scrollHeight
         value.style.minHeight = wh - 100 + 'px'

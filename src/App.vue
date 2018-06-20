@@ -19,5 +19,12 @@ export default {
   /* text-align: center; */
   color: #2c3e50;
   /* margin-top: 60px; */
+
 }
+body {
+  margin:0px;
+  width:1730px;
+  background-color: #CCDDFF;
+}
+
 </style>

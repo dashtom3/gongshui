@@ -1,22 +1,22 @@
 <template>
   <div class="hello">
-    <el-menu
+    <!-- <el-menu
       class="el-menu-demo"
       mode="horizontal"
       background-color="#3387EE"
       text-color="#fff"
       active-text-color="#ffd04b">
       <el-menu-item index="1">唐山市二次供水监控调度平台</el-menu-item>
-    </el-menu>
-    <div class="container" v-loading="loading" element-loading-text="数据加载中">
-      <div class="left">
+    </el-menu> -->
+    <div class="container" v-loading.fullscreen.lock="loading" element-loading-text="数据加载中">
+      <!-- <div class="left">
         <div class="leftTop">
           <el-input size="mini" placeholder="模糊查询" v-model="searchData">
             <el-button size="mini" slot="prepend" icon="el-icon-search"></el-button>
           </el-input>
         </div>
         <el-tree :data="treeData" default-expand-all :props="defaultProps" @node-click="handleNodeClick"></el-tree>
-      </div>
+      </div> -->
       <div class="content" v-if="basicData != null && selectPlace != null">
         <div class="name">
           <h1>{{selectPlace}}</h1>
@@ -53,9 +53,89 @@
         </div>
         <canvas id="myCanvas" width="1300" height="850" @click="clickCanvas">
         </canvas>
+        <div class="video">
+          <div class="video-top">
+            <h3>视频区</h3>
+            <!-- <div v-if="appname == 0">
+              <video width="320" height="240" controls="controls" autoplay="autoplay" v-for="item in videos">
+                <source :src="'http://111.61.241.172:10083/mag/hls/'+item+'/1/live.m3u8'" type="video/mp4">
+              </video>
+            </div>
+            <div v-if="appname == 1"> -->
+              <!-- <div class="videos" :id="item" v-for="item in videos"></div> -->
+
+              <iframe name="videoFrame" class="blocktop" frameborder="no" border="0" marginwidth="0" marginheight="0" scrolling="no" allowtransparency="yes" src="/static/video.html" :id="videoSelected" ></iframe>
+              <el-select v-model="videoSelected" placeholder="请选择" @change="videoChange">
+                <el-option
+                  v-for="item,index in videos"
+                  :key="item"
+                  :label="'通道'+videoLabel[index]"
+                  :value="item">
+                </el-option>
+              </el-select>
+            <!-- </div> -->
+          </div>
+          <div class="video-bottom">
+            <h3>报警区</h3>
+            <div style="width:388px">
+              <el-table
+                :data="alertOwnData"
+                style="color:red;width:100%;background:#CCDDFF !important;"
+                :row-class-name="selectTableRow"
+                border
+                height="320">
+                <el-table-column
+                  prop="day"
+                  label="报警日期"
+                  width="90">
+                </el-table-column>
+                <el-table-column
+                  prop="time"
+                  label="报警时间"
+                  width="80">
+                </el-table-column>
+                <el-table-column
+                  prop="params"
+                  label="变量名称"
+                  width="120">
+                </el-table-column>
+                <el-table-column
+                  prop="value"
+                  label="报警值"
+                  width="70">
+                </el-table-column>
+                <!-- <el-table-column
+                  prop="exvalue"
+                  label="限值"
+                  width="120">
+                </el-table-column> -->
+                <el-table-column
+                  prop="text"
+                  label="报警文本"
+                  width="100">
+                </el-table-column>
+                <!-- <el-table-column
+                  prop="type"
+                  label="报警类型"
+                  width="120">
+                </el-table-column>
+                <el-table-column
+                  prop="case"
+                  label="事件类型"
+                  width="120">
+                </el-table-column>
+                <el-table-column
+                  prop="reason"
+                  label="操作备注"
+                  width="120">
+                </el-table-column> -->
+              </el-table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <div style="width:1920px">
+    <!-- <div style="width:1920px">
       <el-table
         :data="alertData"
         style="color:red;width:100%"
@@ -122,7 +202,7 @@
           width="120">
         </el-table-column>
       </el-table>
-    </div>
+    </div> -->
     <el-dialog
       :title="selectNum+'#控制柜参数监控'"
       :visible.sync="showParams"
@@ -170,22 +250,33 @@
 </template>
 
 <script>
+
 import global from './global'
 import axios from 'axios'
+// import
+// axios.defaults.headers.common['Content-Type'] = 'application/json;charset=UTF-8'
+
 export default {
   name: 'HelloWorld',
   data () {
     return {
+      appname:null,
       basicData:null,
       searchData:null,
       selectPlace:null,
       loading:false,
       ctx:null,
-      alertData:null,
+      alertData:[],
+      alertOwnData:[],
       showParams:false,
       selectNum:-1,
       selectData:[],
       baseTreeData:[],
+      videos:[],
+      players:[],
+      allvideos:[],
+      videoSelected:null,
+      videoLabel:["一","二","三","四","五","六","七","八"],
       image:[{src:"static/bengzu.png"},{src:"static/beng.png"},{src:"static/ra.png"}
     ,{src:"static/al.png"},{src:"static/b_y.png"},{src:"static/b_r.png"},{src:"static/b_g.png"},{src:"static/beng_s.png"}],
       treeData: [],
@@ -202,23 +293,31 @@ export default {
   },
   //二组六泵 学警路
   created(){
-    this.getJson()
-    console.log(this.$route.params.id)
     this.selectPlace = this.$route.params.id
-    if(this.selectPlace) {
-      this.loading = true;
-    }
+    this.getJson()
+    this.getVideoJson()
+
+    // console.log(this.$route.params.id)
+    // console.log(navigator.appName)
+    // console.log(navigator.userAgent)
+    // this.appname = navigator.userAgent.indexOf('Edge') != "-1" ? 0:1 //1 chrome firefox 0 ie
+    // if(this.selectPlace) {
+    //   this.loading = true;
+    // }
   },
   mounted(){
+    // this.promiseLoadImage()
+    this.loading = true;
     this.promiseLoadImage()
   },
   watch: {
-    '$route' (to, from) {
-      // react to route changes...
-      this.selectPlace = to.params.id
-      this.loading = true;
-      this.promiseLoadImage()
-    },
+    // '$route' (to, from) {
+    //   // react to route changes...
+    //   this.selectPlace = to.params.id
+    //   this.videos = this.allvideos[this.selectPlace]
+    //   this.loading = true;
+    //   this.promiseLoadImage()
+    // },
     searchData(cul,old){
       console.log(cul,old)
 
@@ -249,6 +348,12 @@ export default {
           this.$router.push({name:"HelloWorld",params:{id:data.label}})
         }
     },
+    videoChange(val){
+      console.log(val)
+      this.$nextTick(function () {
+        document.getElementById(val).src="/static/video.html";
+      })
+    },
     clickCanvas(item){
       var cvs = document.getElementById("myCanvas");
       var x = item.offsetX;
@@ -262,6 +367,9 @@ export default {
           i++;
         }
       }
+    },
+    selectTableRow(){
+      return "tablerow"
     },
     paramClose(){
       this.showParams = !this.showParams;
@@ -296,6 +404,17 @@ export default {
         self.treeData = self.analyseRegion(res.data)
         self.baseTreeData = self.treeData
         self.getAlertInfo()
+      })
+    },
+    getVideoJson(){
+      var self = this
+      axios.get("../static/video.json").then((res)=>{
+        console.log(res)
+        self.allvideos = res.data
+        self.videos = self.allvideos[self.selectPlace]
+        if(self.videos){
+          self.videoSelected = self.videos[0]
+        }
       })
     },
     analyseRegion(data){
@@ -346,6 +465,12 @@ export default {
           returnDate.push(tempEntity)
         })
         self.alertData = returnDate
+        self.alertOwnData = []
+        self.alertData.forEach(function(item){
+          if(item.room == "self.selectPlace"){
+            self.alertOwnData.push(item)
+          }
+        })
       })
     },
     getRegionInfo(item){
@@ -358,9 +483,14 @@ export default {
           self.ctx = cvs.getContext('2d');
           self.ctx.clearRect(0,0,cvs.width,cvs.height);
           self.draw()
+          setTimeout(()=>{
+            self.getRegionInfo(self.selectPlace)
+          },30000)
         }, 3000);
         // self.draw()
         console.log(self.basicData)
+      }).catch((item)=>{
+        console.log(item)
       })
     },
     analyseData(data){
@@ -407,33 +537,33 @@ export default {
     drawGroup(num,item){
       this.groupClick = []
       var temp = ["一区","二区","三区","四区"]
-      this.ctx.drawImage(this.image[0].data,419,50+(num-1)*195)
+      this.ctx.drawImage(this.image[0].data,419,55+(num-1)*195)
       //几区
-      this.drawText(temp[num-1],1040,140+(num-1)*195,"black","18px")
-      this.drawText(parseFloat(this.basicData["泵组"+num+"区泵组出口压力"]).toFixed(2),1035,80+(num-1)*195)
+      this.drawText(temp[num-1],1040,145+(num-1)*195,"black","18px")
+      this.drawText(parseFloat(this.basicData["泵组"+num+"区泵组出口压力"]).toFixed(2),1035,85+(num-1)*195)
       //TODO 控制模式
       if(this.basicData["泵组"+num+"区泵组运行"] == "true" || this.basicData["泵组"+num+"区泵组运行模式"] == "true"){
-          this.drawText("控制模式 自动",1020,160+(num-1)*195,"black","14px")
+          this.drawText("控制模式 自动",1020,165+(num-1)*195,"black","14px")
       } else {
-          this.drawText("控制模式 手动",1020,160+(num-1)*195,"black","14px")
+          this.drawText("控制模式 手动",1020,165+(num-1)*195,"black","14px")
       }
-      this.drawText("参数监控",1030,185+(num-1)*195,"black","14px")
-      this.drawStrokeRect(1025,170+(num-1)*195,65,20,{color:"gray"})
+      this.drawText("参数监控",1030,190+(num-1)*195,"black","14px")
+      this.drawStrokeRect(1025,175+(num-1)*195,65,20,{color:"gray"})
       //超压报警
       if(this.basicData["泵组"+num+"区泵组出口超压告警"] == "true"){
-        this.drawText("超压报警",1055,105+(num-1)*195,"red","14px")
+        this.drawText("超压报警",1055,110+(num-1)*195,"red","14px")
       }
       //变线器断线
       if(this.basicData["泵组"+num+"区压力变送器断线"] == "true"){
-        this.drawText("变线器断线",890,85+(num-1)*195,"red","14px")
+        this.drawText("变线器断线",890,90+(num-1)*195,"red","14px")
       }
       //泵信息
       for(var i=0;i<parseInt(item.num);i++){
-        this.drawSingle(num,i+1,419+85*i,113+(num-1)*195)
+        this.drawSingle(num,i+1,419+85*i,118+(num-1)*195)
       }
       if(item.isFu) {
         console.log("辅泵")
-        this.drawSmSingle(num,419+85*item.num,113+(num-1)*195)
+        this.drawSmSingle(num,419+85*item.num,118+(num-1)*195)
       }
     },
     //单个泵信息
@@ -450,14 +580,14 @@ export default {
     },
     //通讯报警
     drawAlarm(){
-      if(this.basicData.CommStatus != "0") {
+      if(this.basicData.CommStatus == "true") {
         this.drawAlarmSingle(0,"泵房")
       }
       var temp = 1;
       var i = 1;
       var temp2 = ["一区","二区","三区","四区"]
       while(this.basicData.data[i] != null) {
-        if(this.basicData["泵组"+i+"区PLC通讯故障"] != "0"){
+        if(this.basicData["泵组"+i+"区PLC通讯故障"] == "true"){
           this.drawAlarmSingle(temp,temp2[i-1]+"泵组")
           temp++
         }
@@ -465,8 +595,8 @@ export default {
       }
     },
     drawAlarmSingle(num,text){
-      this.ctx.drawImage(this.image[2].data,320+num*170,0)
-      this.drawText(text+"通讯失败",370+num*170,22,"red","15px")
+      this.ctx.drawImage(this.image[2].data,320+num*170,5)
+      this.drawText(text+"通讯失败",370+num*170,27,"red","15px")
     },
     //辅泵信息
     drawSmSingle(groupN,x,y){
@@ -484,16 +614,16 @@ export default {
     drawBlock(){
       console.log("烟雾:"+this.basicData["烟雾告警1"]+",水浸:"+this.basicData["水浸告警"])
       if(this.basicData["烟雾告警1"] == "true") {
-        this.ctx.drawImage(this.image[3].data,21,490)
+        this.ctx.drawImage(this.image[3].data,21,495)
       }
       if(this.basicData["水浸告警"] == "true"){
-        this.ctx.drawImage(this.image[3].data,21,530)
+        this.ctx.drawImage(this.image[3].data,21,535)
       }
       var temp = this.basicData["电动阀1故障"] == "true" ? "电动阀1":""
       var temp1 = this.basicData["电动阀2故障"] == "true" ? "电动阀2":""
       temp = (temp1 != "" && temp != "")?temp+"、"+temp1:temp+temp1
       if(temp != ""){
-        this.drawText(temp+"故障",85,480,"red","13px")
+        this.drawText(temp+"故障",85,485,"red","13px")
       }
     },
     //污水泵
@@ -501,60 +631,60 @@ export default {
       console.log("污水泵:"+this.basicData["污水泵1运行"]+","+this.basicData["污水泵2运行"]+",状态:"+this.basicData["污水泵控制模式"])
       console.log("集水坑高、超高液位:"+this.basicData["集水坑高液位"]+","+this.basicData["集水坑超高液位"])
       if(this.basicData["污水泵1运行"] == "true") {
-        this.ctx.drawImage(this.image[6].data,10,714)
+        this.ctx.drawImage(this.image[6].data,10,717)
       }else {
-        this.ctx.drawImage(this.image[5].data,10,714)
+        this.ctx.drawImage(this.image[5].data,10,717)
       }
       if(this.basicData["污水泵2运行"] == "true"){
-        this.ctx.drawImage(this.image[6].data,43,714)
+        this.ctx.drawImage(this.image[6].data,43,717)
       }else {
-        this.ctx.drawImage(this.image[5].data,43,714)
+        this.ctx.drawImage(this.image[5].data,43,717)
       }
 
-      this.drawText("集水坑状态",9,690,"black","14px")
+      this.drawText("集水坑状态",9,695,"black","14px")
       var temp = this.basicData["污水泵控制模式"] == "true" ? "自动":"手动"
-      this.drawText("状态 "+temp,10,708,"black","12px")
+      this.drawText("状态 "+temp,10,713,"black","12px")
 
       if(this.basicData["集水坑超高液位"] == "true") {
-        this.drawText("超高液位",10,810,"red","13px")
+        this.drawText("超高液位",10,815,"red","13px")
       }
       if(this.basicData["集水坑高液位"] == "true"){
-        this.drawText("高液位",10,795,"red","13px")
+        this.drawText("高液位",10,800,"red","13px")
       }
     },
     //水箱液位
     drawWaterBox(){
       console.log("水箱液位1:"+this.basicData["水箱液位1"]+","+"水箱超低、超高水位告警:"+this.basicData["水箱超低水位告警"]+","+this.basicData["水箱超高水位告警"])
-      this.drawText("------水箱液位:"+this.basicData["水箱液位1"]+"------",190,650,"black","16px")
+      this.drawText("------水箱液位:"+parseFloat(this.basicData["水箱液位1"]).toFixed(2)+"------",190,650,"black","16px")
       if(this.basicData["水箱超低水位告警"] == "true") {
-        this.drawText("超低液位",320,695,"red","13px")
+        this.drawText("超低液位",320,700,"red","13px")
       }
       if(this.basicData["水箱超高水位告警"] == "true"){
-        this.drawText("超高液位",320,590,"red","13px")
+        this.drawText("超高液位",320,595,"red","13px")
       }
     },
     //进水开关阀
     drawWaterTap(){
       //电动阀1
-      this.drawText("进水电动阀1",210,435,"black","14px")
-      this.drawText("状态:"+(this.basicData["电动阀1操作模式"] == "true"?"自动":"手动"),220,450,"black","12px")
-      this.drawText("开到位",210,465,"black","12px")
+      this.drawText("进水电动阀1",210,440,"black","14px")
+      this.drawText("状态:"+(this.basicData["电动阀1操作模式"] == "true"?"自动":"手动"),220,455,"black","12px")
+      this.drawText("开到位",210,470,"black","12px")
       var tempCol = this.basicData["电动阀1开到位"] == "true" ? "green":"gray";
-      this.drawFillRect(250,455,24,12,{color:tempCol})
-      this.drawText("关到位",210,480,"black","12px")
+      this.drawFillRect(250,460,24,12,{color:tempCol})
+      this.drawText("关到位",210,485,"black","12px")
       tempCol = this.basicData["电动阀1关到位"] == "true" ? "green":"gray";
-      this.drawFillRect(250,470,24,12,{color:tempCol})
-      this.drawStrokeRect(208,422,85,62,{color:"#00CCFF"})
+      this.drawFillRect(250,475,24,12,{color:tempCol})
+      this.drawStrokeRect(208,427,85,62,{color:"#00CCFF"})
       //电动阀2
-      this.drawText("进水电动阀2",320,435,"black","14px")
+      this.drawText("进水电动阀2",320,440,"black","14px")
       this.drawText("状态:"+(this.basicData["电动阀2操作模式"] == "true"?"自动":"手动"),330,450,"black","12px")
-      this.drawText("开到位",320,465,"black","12px")
+      this.drawText("开到位",320,470,"black","12px")
       var tempCol = this.basicData["电动阀2开到位"] == "true" ? "green":"gray";
-      this.drawFillRect(360,455,24,12,{color:tempCol})
-      this.drawText("关到位",320,480,"black","12px")
+      this.drawFillRect(360,460,24,12,{color:tempCol})
+      this.drawText("关到位",320,485,"black","12px")
       tempCol = this.basicData["电动阀2关到位"] == "true" ? "green":"gray";
-      this.drawFillRect(360,470,24,12,{color:tempCol})
-      this.drawStrokeRect(318,422,85,62,{color:"#00CCFF"})
+      this.drawFillRect(360,475,24,12,{color:tempCol})
+      this.drawStrokeRect(318,427,85,62,{color:"#00CCFF"})
     },
     drawText(content,x,y,color,size){
       this.ctx.font= (size?size:"12px") + " Helvetica";
@@ -579,16 +709,14 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style>
 .el-menu-demo {
   padding-left: 200px;
   width: 1720px;
 }
 .container {
-  width: 1920px;
-  background-color: #CCDDFF;
+  width: 1730px;
   height: 870px;
-
 }
 .leftTop {
   background-color: white
@@ -604,9 +732,45 @@ export default {
   overflow-y: scroll;
   /* background-color: #3387EE; */
   /* background-color: #CCDDFF; */
+
+  -ms-scroll-chaining: chained;
+    -ms-overflow-style: none;
+    -ms-content-zooming: zoom;
+    -ms-scroll-rails: none;
+    -ms-content-zoom-limit-min: 100%;
+    -ms-content-zoom-limit-max: 500%;
+    -ms-scroll-snap-type: proximity;
+    -ms-scroll-snap-points-x: snapList(100%, 200%, 300%, 400%, 500%);
+    -ms-overflow-style: none;
+}
+.left::-webkit-scrollbar {
+    width:0px;
+    height:0px;
+}
+.left::-webkit-scrollbar-button    {
+    background-color:rgba(0,0,0,0);
+}
+.left::-webkit-scrollbar-track     {
+    background-color:rgba(0,0,0,0);
+}
+.left::-webkit-scrollbar-track-piece {
+    background-color:rgba(0,0,0,0);
+}
+.left::-webkit-scrollbar-thumb{
+    background-color:rgba(0,0,0,0);
+}
+.left::-webkit-scrollbar-corner {
+    background-color:rgba(0,0,0,0);
+}
+.left::-webkit-scrollbar-resizer  {
+    background-color:rgba(0,0,0,0);
+}
+.left::-webkit-scrollbar {
+    width:10px;
+    height:10px;
 }
 .content{
-  width: 1700px;
+  width: 1720px;
   float: left;
   padding: 5px;
   /* background-color: #CCDDFF; */
@@ -674,9 +838,94 @@ h4 {
   width: 195px;
     float: left;
 }
+.video {
+  /* position: fixed; */
+  /* top: 0; */
+  float: right;
+  margin-top: -425px;
+  width: 390px;
+  height:865px;
+}
+.video-top {
+  text-align: center;
+  height: 460px;
+  border: 1px solid #333333;
+}
+.video-bottom {
+  text-align: center;
+  /* height: 335px; */
+  border: 1px solid #333333;
+  margin-top: -1px;
+}
 #myCanvas{
   margin-top:-420px;
   z-index:-1;
   /* background-color: #eeeeee; */
 }
+iframe {
+  /* border: 1px solid #333333; */
+  width: 100%;
+  height: 340px;
+}
+.blocktop{
+
+    /* margin-left: 10px; */
+
+    overflow-x: none;
+    -ms-scroll-chaining: chained;
+    -ms-overflow-style: none;
+    -ms-content-zooming: zoom;
+    -ms-scroll-rails: none;
+    -ms-content-zoom-limit-min: 100%;
+    -ms-content-zoom-limit-max: 500%;
+    -ms-scroll-snap-type: proximity;
+    -ms-scroll-snap-points-x: snapList(100%, 200%, 300%, 400%, 500%);
+    -ms-overflow-style: none;
+  }
+  .blocktop::-webkit-scrollbar {
+  width:0px;
+  height:0px;
+  }
+  .blocktop::-webkit-scrollbar-button    {
+      background-color:rgba(0,0,0,0);
+  }
+  .blocktop::-webkit-scrollbar-track     {
+      background-color:rgba(0,0,0,0);
+  }
+  .blocktop::-webkit-scrollbar-track-piece {
+      background-color:rgba(0,0,0,0);
+  }
+  .blocktop::-webkit-scrollbar-thumb{
+      background-color:rgba(0,0,0,0);
+  }
+  .blocktop::-webkit-scrollbar-corner {
+      background-color:rgba(0,0,0,0);
+  }
+  .blocktop::-webkit-scrollbar-resizer  {
+      background-color:rgba(0,0,0,0);
+  }
+  .el-table .tablerow {
+    background:#CCDDFF;
+  }
+  .el-table {
+    background:#CCDDFF;
+  }
+  h3 {
+    margin:0;
+    padding:15px 0px;
+    background:#DDEEFE;
+  }
+  thead {
+    color:#2c3e50 !important;
+  }
+  .el-table th,tr {
+    background:#CCDDFF !important;
+  }
+  th,td {
+    border-right:1px solid #333333 !important;
+    border-bottom:1px solid #333333 !important;
+  }
+  .el-table--border {
+    border:1px solid #333333 !important;
+  }
 </style>
