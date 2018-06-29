@@ -253,6 +253,7 @@
 
 import global from './global'
 import axios from 'axios'
+import crypto from 'crypto'
 // import
 // axios.defaults.headers.common['Content-Type'] = 'application/json;charset=UTF-8'
 
@@ -297,13 +298,6 @@ export default {
     this.getJson()
     this.getVideoJson()
 
-    // console.log(this.$route.params.id)
-    // console.log(navigator.appName)
-    // console.log(navigator.userAgent)
-    // this.appname = navigator.userAgent.indexOf('Edge') != "-1" ? 0:1 //1 chrome firefox 0 ie
-    // if(this.selectPlace) {
-    //   this.loading = true;
-    // }
   },
   mounted(){
     // this.promiseLoadImage()
@@ -407,14 +401,15 @@ export default {
       })
     },
     getVideoJson(){
-      var self = this
-      axios.get("../static/video.json").then((res)=>{
-        console.log(res)
-        self.allvideos = res.data
-        self.videos = self.allvideos[self.selectPlace]
-        if(self.videos){
-          self.videoSelected = self.videos[0]
+      var url = "http://111.61.241.172:10084"
+      axios.get(url).then((res)=>{
+        this.allvideos = res.data.data
+        this.videos = this.allvideos[this.selectPlace]
+        if(this.videos){
+          this.videoSelected = this.videos[0]
+          this.videoChange(this.videoSelected)
         }
+        console.log(this.videos)
       })
     },
     analyseRegion(data){
@@ -478,22 +473,34 @@ export default {
       global.apiGet(this,"getRegionInfo?region="+item,null).then(function(res){
         self.basicData = res
         self.analyseData(res)
-        var p = setTimeout(()=>{
+        self.$nextTick(function(){
           var cvs = document.getElementById("myCanvas");
-          self.ctx = cvs.getContext('2d');
-          self.ctx.clearRect(0,0,cvs.width,cvs.height);
-          self.draw()
-          setTimeout(()=>{
-            self.getRegionInfo(self.selectPlace)
-          },30000)
-        }, 3000);
+          if(cvs){
+            self.ctx = cvs.getContext('2d');
+            self.ctx.clearRect(0,0,cvs.width,cvs.height);
+            self.draw()
+            setTimeout(()=>{
+              self.getRegionInfo(self.selectPlace)
+            },5000)
+          }
+        })
+        // var p = setTimeout(()=>{
+        //   var cvs = document.getElementById("myCanvas");
+        //   self.ctx = cvs.getContext('2d');
+        //   self.ctx.clearRect(0,0,cvs.width,cvs.height);
+        //   self.draw()
+        //   setTimeout(()=>{
+        //     self.getRegionInfo(self.selectPlace)
+        //   },30000)
+        // }, 3000);
         // self.draw()
-        console.log(self.basicData)
+        // console.log(self.basicData)
       }).catch((item)=>{
         console.log(item)
       })
     },
     analyseData(data){
+      // console.log(data)
       var temp={};
       temp.data = {};
       Object.keys(data).forEach(function(key){
@@ -520,11 +527,17 @@ export default {
 
       })
       this.basicData = temp
+      console.log(this.basicData)
     },
     draw(){
       var i=1;
       while(this.basicData.data[i] != null) {
-        this.drawGroup(i,this.basicData.data[i]);
+        i++;
+      }
+      var allNum = i;
+      i=1;
+      while(this.basicData.data[i] != null) {
+        this.drawGroup(i,this.basicData.data[i],allNum);
         i++;
       }
       this.drawBlock()
@@ -534,15 +547,15 @@ export default {
       this.drawAlarm()
       this.loading = false;
     },
-    drawGroup(num,item){
+    drawGroup(num,item,allNum){
       this.groupClick = []
       var temp = ["一区","二区","三区","四区"]
       this.ctx.drawImage(this.image[0].data,419,55+(num-1)*195)
       //几区
-      this.drawText(temp[num-1],1040,145+(num-1)*195,"black","18px")
-      this.drawText(parseFloat(this.basicData["泵组"+num+"区泵组出口压力"]).toFixed(2),1035,85+(num-1)*195)
+      this.drawText(temp[allNum-num-1],1040,145+(num-1)*195,"black","18px")
+      this.drawText(parseFloat(this.basicData["泵组"+(allNum-num)+"区泵组出口压力"]).toFixed(2),1035,85+(num-1)*195)
       //TODO 控制模式
-      if(this.basicData["泵组"+num+"区泵组运行"] == "true" || this.basicData["泵组"+num+"区泵组运行模式"] == "true"){
+      if(this.basicData["泵组"+(allNum-num)+"区泵组运行"] == "true" || this.basicData["泵组"+(allNum-num)+"区泵组运行模式"] == "true"){
           this.drawText("控制模式 自动",1020,165+(num-1)*195,"black","14px")
       } else {
           this.drawText("控制模式 手动",1020,165+(num-1)*195,"black","14px")
@@ -550,20 +563,20 @@ export default {
       this.drawText("参数监控",1030,190+(num-1)*195,"black","14px")
       this.drawStrokeRect(1025,175+(num-1)*195,65,20,{color:"gray"})
       //超压报警
-      if(this.basicData["泵组"+num+"区泵组出口超压告警"] == "true"){
+      if(this.basicData["泵组"+(allNum-num)+"区泵组出口超压告警"] == "true"){
         this.drawText("超压报警",1055,110+(num-1)*195,"red","14px")
       }
       //变线器断线
-      if(this.basicData["泵组"+num+"区压力变送器断线"] == "true"){
+      if(this.basicData["泵组"+(allNum-num)+"区压力变送器断线"] == "true"){
         this.drawText("变线器断线",890,90+(num-1)*195,"red","14px")
       }
       //泵信息
       for(var i=0;i<parseInt(item.num);i++){
-        this.drawSingle(num,i+1,419+85*i,118+(num-1)*195)
+        this.drawSingle(allNum-num,i+1,419+85*i,118+(num-1)*195)
       }
       if(item.isFu) {
         console.log("辅泵")
-        this.drawSmSingle(num,419+85*item.num,118+(num-1)*195)
+        this.drawSmSingle(allNum-num,419+85*item.num,118+(num-1)*195)
       }
     },
     //单个泵信息

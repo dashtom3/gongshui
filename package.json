@@ -15,6 +15,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "babel-polyfill": "^6.26.0",
+    "crypto": "^1.0.1",
     "element-ui": "^2.2.1",
     "hls": "0.0.1",
     "videojs-contrib-hls": "^5.14.1",
