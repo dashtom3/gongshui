@@ -294,7 +294,7 @@ export default {
   },
   //二组六泵 学警路
   created(){
-    this.selectPlace = this.$route.params.id
+    this.selectPlace = this.$route.params.id.split('&')[0]
     this.getJson()
     this.getVideoJson()
 
@@ -401,10 +401,13 @@ export default {
       })
     },
     getVideoJson(){
-      var url = "http://111.61.241.172:10084"
+      var url = "http://111.61.241.172:10084?name="+this.selectPlace
       axios.get(url).then((res)=>{
-        this.allvideos = res.data.data
-        this.videos = this.allvideos[this.selectPlace]
+        console.log(res)
+        this.videos = []
+        res.data.data.data.list.forEach(item=>{
+          this.videos.push(item.cameraUuid)
+        })
         if(this.videos){
           this.videoSelected = this.videos[0]
           this.videoChange(this.videoSelected)
