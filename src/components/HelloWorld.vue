@@ -51,7 +51,7 @@
             </div>
           </div>
         </div>
-        <canvas id="myCanvas" width="1300" height="850" @click="clickCanvas">
+        <canvas id="myCanvas" width="1300" height="940" @click="clickCanvas">
         </canvas>
         <div class="video">
           <div class="video-top">
@@ -279,12 +279,18 @@ export default {
       videoSelected:null,
       videoLabel:["一","二","三","四","五","六","七","八"],
       image:[{src:"static/bengzu.png"},{src:"static/beng.png"},{src:"static/ra.png"}
-    ,{src:"static/al.png"},{src:"static/b_y.png"},{src:"static/b_r.png"},{src:"static/b_g.png"},{src:"static/beng_s.png"}],
+    ,{src:"static/al.png"},{src:"static/b_y.png"},{src:"static/b_r.png"},{src:"static/b_g.png"},
+    {src:"static/beng_s.png"},{src:"static/bengzu1.png"},{src:"static/beng1.png"}],
       treeData: [],
         defaultProps: {
           children: 'children',
           label: 'label'
         },
+        //
+        imgMargin:[0,130,130,95,90,83,83],//用下标表示一组里汞的数量
+        adjustGroup:[{bengW:65,bengH:120}],
+        zoneNum:false,
+        //imgStartPos:[0,110,90,70,50,30,10],
         prop1Title:[['线电压Uab','进线柜线电压Uab','V'],['线电压Ubc','进线柜线电压Ubc','V'],['线电压Uca','进线柜线电压Uca','V'],['相电压Ua','进线柜相电压Ua','V'],['相电压Ub','进线柜相电压Ub','V'],['相电压Uc','进线柜相电压Uc','V'],
         ['线电流IA','进线柜线电流IA','A'],['线电流IAB','进线柜线电流IB','A'],['线电流IC','进线柜线电流IC','A'],['有功功率','进线柜有功功率','KW'],['功率因数','进线柜功率因数','%'],['累计电能','进线柜累计电能','KWh']],
         prop2Title:[['1#进水压力','进水压力1','Mpa'],['2#进水压力','进水压力2','Mpa'],['1#进水流量','进水瞬时流量1','t/h'],['2#进水流量','进水瞬时流量1','t/h'],['1#进水流量累计','进水累计流量1','t'],['2#进水流量累计','进水累计流量2','t']],
@@ -294,7 +300,7 @@ export default {
   },
   //二组六泵 学警路
   created(){
-    this.selectPlace = this.$route.params.id.split('&')[0]
+      this.selectPlace = this.$route.params.id.split('&')[0]
     this.getJson()
     this.getVideoJson()
 
@@ -352,15 +358,32 @@ export default {
       var cvs = document.getElementById("myCanvas");
       var x = item.offsetX;
       var y = item.offsetY;
-      var i = 1;
-      if(x>= 1025 && x<=1090){
-        while(this.basicData.data[i] != null) {
-          if(y>=(170+(i-1)*195) && y<=(170+i*195)){
-            this.showParamTable(i)
-          }
-          i++;
-        }
+      // var i = 1;//原来是i=1
+      var i=1;
+      while(this.basicData.data[i] != null) {
+        i++;
       }
+      var allNum = i;
+      i = 1;
+      if(this.zoneNum){
+          if(x>= 1025 && x<=1090){
+          while(this.basicData.data[i] != null) {
+            if(y>=(170+(allNum-i-1)*195) && y<=(190+(allNum-i-1)*195)){
+              this.showParamTable(i)
+            }
+            i++;
+          }
+        }
+      }else{
+          while(i>0) {
+            if(x>= 1025 && x<=1090 && y>=(70+(allNum-1-i)*125) && y<=(90+(allNum-1-i)*125)){
+              this.showParamTable(i)
+            }
+            i++;
+            if(i==0)break;
+          }
+      }
+      
     },
     selectTableRow(){
       return "tablerow"
@@ -538,11 +561,26 @@ export default {
         i++;
       }
       var allNum = i;
+      console.log(allNum,"allnum")
+      
       i=1;
+      //判断组的个数赋值到全局变量
+      if(allNum<6){this.zoneNum = true}
+      else{this.zoneNum = false}
+      //渲染区
       while(this.basicData.data[i] != null) {
         this.drawGroup(i,this.basicData.data[i],allNum);
         i++;
       }
+
+      //模拟增加区
+      // var item = {num:5};
+      // if(item.num<5){this.zoneNum = true}//item.num 要改为allNum<6
+      // else{this.zoneNum = false}
+      // for(var i=1;i<6;i++){
+      //   this.drawGroup(i,item,6);
+      // }
+      
       this.drawBlock()
       this.drawWaterPull()
       this.drawWaterBox()
@@ -550,9 +588,17 @@ export default {
       this.drawAlarm()
       this.loading = false;
     },
+    // image:[{0:"static/bengzu.png"},{1:"static/beng.png"},{2:"static/ra.png"}
+    // ,{3:"static/al.png"},{4:"static/b_y.png"},{5:"static/b_r.png"},{6:"static/b_g.png"},{7:"static/beng_s.png"},{8:"static/bengzu1.png"}]
     drawGroup(num,item,allNum){
       this.groupClick = []
-      var temp = ["一区","二区","三区","四区"]
+      var temp = ["一区","二区","三区","四区","五区","六区","七区"]
+      //按照组数调整参数
+      // var startY,bengNum,bengzuNum,zoneNumX,zoneNumY,mpaX,mpaY,k;
+      //根据组的数量调整
+      console.log(this.zoneNum)
+      if(this.zoneNum){
+        //bengzu.png
       this.ctx.drawImage(this.image[0].data,419,55+(num-1)*195)
       //几区
       this.drawText(temp[allNum-num-1],1040,145+(num-1)*195,"black","18px")
@@ -567,52 +613,167 @@ export default {
       this.drawStrokeRect(1025,175+(num-1)*195,65,20,{color:"gray"})
       //超压报警
       if(this.basicData["泵组"+(allNum-num)+"区泵组出口超压告警"] == "true"){
-        this.drawText("超压报警",1055,110+(num-1)*195,"red","14px")
+        this.drawText("超压报警",1055,107+(num-1)*195,"red","14px")
       }
       //变线器断线
       if(this.basicData["泵组"+(allNum-num)+"区压力变送器断线"] == "true"){
         this.drawText("变线器断线",890,90+(num-1)*195,"red","14px")
       }
+      //模拟增加汞的数量
+      // let n1 = 6;
+      // for(var i=0;i<n1;i++){
+      //   let x = this.adjustMargin(1,n1)
+      //   console.log(x)
+      //   this.drawSingle(allNum-num,i+1,445+x*i,118+(num-1)*195)
+      // }
+      // if(0) {
+      //   let x = this.adjustMargin(1,n1);
+      //   console.log("辅泵")
+      //   this.drawSmSingle(allNum-num,445+x*5,118+(num-1)*195)
+      // }
       //泵信息
-      for(var i=0;i<parseInt(item.num);i++){
-        this.drawSingle(allNum-num,i+1,419+85*i,118+(num-1)*195)
+      for(var i=0;i<item.num;i++){
+        let x = this.adjustMargin(item.isFu,item.num)
+        console.log(x)
+        this.drawSingle(allNum-num,i+1,445+x*i,118+(num-1)*195)
       }
       if(item.isFu) {
+        let x = this.adjustMargin(item.isFu,item.num);
         console.log("辅泵")
-        this.drawSmSingle(allNum-num,419+85*item.num,118+(num-1)*195)
+        this.drawSmSingle(allNum-num,445+x*item.num,118+(num-1)*195)
       }
+     
+  
+      //组数大于4的调整
+      }else{
+         this.ctx.drawImage(this.image[8].data,419,15+(num-1)*125)
+      //几区
+      this.drawText(temp[allNum-num-1],970,30+(num-1)*125,"black","18px")
+      this.drawText(parseFloat(this.basicData["泵组"+(allNum-num)+"区泵组出口压力"]).toFixed(2),875,77+(num-1)*125)
+      //TODO 控制模式
+      if(this.basicData["泵组"+(allNum-num)+"区泵组运行"] == "true" || this.basicData["泵组"+(allNum-num)+"区泵组运行模式"] == "true"){
+          this.drawText("控制模式 自动",1012,60+(num-1)*125,"black","14px")
+      } else {
+          this.drawText("控制模式 手动",1012,60+(num-1)*125,"black","14px")
+      }
+      this.drawText("参数监控",1030,85+(num-1)*125,"black","14px")
+      this.drawStrokeRect(1025,70+(num-1)*125,65,20,{color:"gray"})
+      //超压报警
+      this.drawText("超压报警",865,100+(num-1)*125,"red","14px")
+      if(this.basicData["泵组"+(allNum-num)+"区泵组出口超压告警"] == "true"){
+        this.drawText("超压报警",865,100+(num-1)*125,"red","14px")
+      }
+      //变线器断线
+      this.drawText("变线器断线",840,30+(num-1)*125,"red","14px")
+      if(this.basicData["泵组"+(allNum-num)+"区压力变送器断线"] == "true"){
+        this.drawText("变线器断线",840,30+(num-1)*125,"red","14px")
+      }
+      //模拟增加汞的数量
+    //   let n1 = 4;
+    //   for(var i=0;i<n1;i++){
+    //     let x = this.adjustMargin(1,n1)
+    //     console.log(x)
+    //     this.drawSingle(allNum-num,i+1,445+x*i,41+(num-1)*125)
+    //   }
+    //   if(0) {
+    //     let x = this.adjustMargin(1,n1);
+    //     console.log("辅泵")
+    //     this.drawSmSingle(allNum-num,445+x*5,118+(num-1)*125)
+    //   }
+    //    }
+    // },
+    //泵信息
+      for(var i=0;i<item.num;i++){
+        let x = this.adjustMargin(item.isFu,item.num)
+        console.log(x)
+        this.drawSingle(allNum-num,i+1,445+x*i,118+(num-1)*195)
+      }
+      if(item.isFu) {
+        let x = this.adjustMargin(item.isFu,item.num);
+        console.log("辅泵")
+        this.drawSmSingle(allNum-num,445+x*item.num,118+(num-1)*195)
+      }
+     }
+    },
+
+
+    //调整泵的间隔
+    adjustMargin(isFu,num){
+      let x;
+      if(isFu){
+        x = this.imgMargin[num];
+      }else{
+        x = this.imgMargin[num-1];
+      }
+      return x;
     },
     //单个泵信息
     drawSingle(groupN,singleNum,x,y){
       console.log("变频器运行："+this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行"])
-      this.ctx.drawImage(this.image[1].data,x,y)
-      this.drawText(parseFloat(this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行频率"]?this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行频率"]:"0.0").toFixed(2),x+31,y+129)
-      this.drawText(parseFloat(this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行电流"]?this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行电流"]:"0.0").toFixed(2),x+31,y+154)
-      if(this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行"] == "true"){
-        this.ctx.drawImage(this.image[6].data,x+26,y+26)
-      } else {
-        this.ctx.drawImage(this.image[5].data,x+26,y+26)
+      if(this.zoneNum){
+        this.ctx.drawImage(this.image[1].data,x,y)
+        this.drawText(parseFloat(this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行频率"]?this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行频率"]:"0.0").toFixed(2),x+31,y+129)
+        this.drawText(parseFloat(this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行电流"]?this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行电流"]:"0.0").toFixed(2),x+31,y+154)
+        if(this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行"] == "true"){
+          this.ctx.drawImage(this.image[6].data,x+26,y+26)
+        } else {
+          this.ctx.drawImage(this.image[5].data,x+26,y+26)
+        }
+      }else{
+        this.ctx.drawImage(this.image[9].data,x,y)
+        this.drawText(parseFloat(this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行频率"]?this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行频率"]:"0.0").toFixed(2),x+34,y+82)
+        this.drawText(parseFloat(this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行电流"]?this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行电流"]:"0.0").toFixed(2),x+34,y+108)
+        if(this.basicData["泵组"+groupN+"区"+singleNum+"#泵变频器运行"] == "true"){
+          this.ctx.drawImage(this.image[6].data,x+30,y+9,18,18)
+        } else {
+          this.ctx.drawImage(this.image[5].data,x+30,y+9,18,18)
+        }
       }
     },
     //通讯报警
     drawAlarm(){
-      if(this.basicData.CommStatus == "true") {
-        this.drawAlarmSingle(0,"泵房")
-      }
-      var temp = 1;
-      var i = 1;
-      var temp2 = ["一区","二区","三区","四区"]
-      while(this.basicData.data[i] != null) {
-        if(this.basicData["泵组"+i+"区PLC通讯故障"] == "true"){
-          this.drawAlarmSingle(temp,temp2[i-1]+"泵组")
-          temp++
+      if(this.zoneNum){
+        if(this.basicData.CommStatus == "true") {
+          this.drawAlarmSingle(0,"泵房")
         }
-        i++;
+        var temp = 1;
+        var i = 1;
+        var temp2 = ["一区","二区","三区","四区"]
+        
+        while(this.basicData.data[i] != null) {
+          if(this.basicData["泵组"+i+"区PLC通讯故障"] == "true"){
+            this.drawAlarmSingle(temp,temp2[i-1]+"泵组")
+            temp++
+          }
+          i++;
+        }
+      }else{
+        if(this.basicData.CommStatus == "true") {
+          this.drawAlarmSingle(0,"泵房")
+        }
+        var temp = 1;
+        var i = 1;
+        var temp2 = ["一区","二区","三区","四区","五区","六区","七区"]
+        
+        while(i<8) {
+           this.drawAlarmSingle(temp,temp2[i-1]+"泵组")
+            temp++
+          if(this.basicData["泵组"+i+"区PLC通讯故障"] == "true"){
+            this.drawAlarmSingle(temp,temp2[i-1]+"泵组")
+            temp++
+          }
+          i++;
+        }
       }
     },
     drawAlarmSingle(num,text){
-      this.ctx.drawImage(this.image[2].data,320+num*170,5)
-      this.drawText(text+"通讯失败",370+num*170,27,"red","15px")
+      if(this.zoneNum){
+        this.ctx.drawImage(this.image[2].data,320+num*170,5)
+        this.drawText(text+"通讯失败",370+num*170,27,"red","15px")
+      }else{
+        this.ctx.drawImage(this.image[2].data,312,num*36-20,25,25)
+        this.drawText(text+"通讯失败",316,14+num*36,"red","11px")
+      }
     },
     //辅泵信息
     drawSmSingle(groupN,x,y){
@@ -790,16 +951,19 @@ export default {
   float: left;
   padding: 5px;
   /* background-color: #CCDDFF; */
-  height: 850px;
+  height: 930px;
   background: url('/static/all.jpg') no-repeat;
 }
 .name {
   text-align: center;
-  width: 310px;
+  width: 312px;
   background-color:#DDEEFE;
+  height: 44px;  
 }
 .name h1 {
   margin-bottom: 0px;
+  font-size: 25px;
+  padding-top: 4px;
 }
 .prop1 {
   text-align: center;
