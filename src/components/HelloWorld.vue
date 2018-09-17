@@ -375,7 +375,7 @@ export default {
           }
         }
       }else{
-          while(i>0) {
+          while(this.basicData.data[i] != null) {
             if(x>= 1025 && x<=1090 && y>=(70+(allNum-1-i)*125) && y<=(90+(allNum-1-i)*125)){
               this.showParamTable(i)
             }
@@ -394,7 +394,7 @@ export default {
     showParamTable(num){
       this.selectNum = num;
       this.selectData = [['相电压Ua','泵组'+num+'区控制柜相电压Ua','V'],['相电压Ub','泵组'+num+'区控制柜相电压Ub','V'],['相电压Uc','泵组'+num+'区控制柜相电压Uc','V'],
-      ['相电流IA','泵组'+num+'区控制柜相电流IA','A'],['相电流IAB','泵组'+num+'区控制柜相电流IB','A'],['相电流IC','泵组'+num+'区控制柜相电流IC','A']]
+      ['相电流IA','泵组'+num+'区控制柜相电流IA','A'],['相电流IB','泵组'+num+'区控制柜相电流IB','A'],['相电流IC','泵组'+num+'区控制柜相电流IC','A']]
         this.showParams = !this.showParams;
     },
     promiseLoadImage(){
@@ -659,12 +659,10 @@ export default {
       this.drawText("参数监控",1030,85+(num-1)*125,"black","14px")
       this.drawStrokeRect(1025,70+(num-1)*125,65,20,{color:"gray"})
       //超压报警
-      this.drawText("超压报警",865,100+(num-1)*125,"red","14px")
       if(this.basicData["泵组"+(allNum-num)+"区泵组出口超压告警"] == "true"){
         this.drawText("超压报警",865,100+(num-1)*125,"red","14px")
       }
       //变线器断线
-      this.drawText("变线器断线",840,30+(num-1)*125,"red","14px")
       if(this.basicData["泵组"+(allNum-num)+"区压力变送器断线"] == "true"){
         this.drawText("变线器断线",840,30+(num-1)*125,"red","14px")
       }
@@ -678,7 +676,7 @@ export default {
     //   if(0) {
     //     let x = this.adjustMargin(1,n1);
     //     console.log("辅泵")
-    //     this.drawSmSingle(allNum-num,445+x*5,118+(num-1)*125)
+    //     this.drawSmSingle(allNum-num,445+x*5,41+(num-1)*125)
     //   }
     //    }
     // },
@@ -686,12 +684,12 @@ export default {
       for(var i=0;i<item.num;i++){
         let x = this.adjustMargin(item.isFu,item.num)
         console.log(x)
-        this.drawSingle(allNum-num,i+1,445+x*i,118+(num-1)*195)
+        this.drawSingle(allNum-num,i+1,445+x*i,41+(num-1)*125)
       }
       if(item.isFu) {
         let x = this.adjustMargin(item.isFu,item.num);
         console.log("辅泵")
-        this.drawSmSingle(allNum-num,445+x*item.num,118+(num-1)*195)
+        this.drawSmSingle(allNum-num,445+x*item.num,41+(num-1)*125)
       }
      }
     },
@@ -755,9 +753,7 @@ export default {
         var i = 1;
         var temp2 = ["一区","二区","三区","四区","五区","六区","七区"]
         
-        while(i<8) {
-           this.drawAlarmSingle(temp,temp2[i-1]+"泵组")
-            temp++
+        while(this.basicData.data[i] != null) {
           if(this.basicData["泵组"+i+"区PLC通讯故障"] == "true"){
             this.drawAlarmSingle(temp,temp2[i-1]+"泵组")
             temp++
