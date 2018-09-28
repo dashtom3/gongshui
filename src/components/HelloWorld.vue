@@ -366,6 +366,27 @@ export default {
       var allNum = i;
       i = 1;
       if(this.zoneNum){
+        if(allNum==2){
+          if(x>= 1025 && x<=1090){
+          while(this.basicData.data[i] != null) {
+            if(y>=(370+(allNum-i-1)*195) && y<=(390+(allNum-i-1)*195)){
+              this.showParamTable(i)
+            }
+            i++;
+          }
+          }
+        }
+        else if(allNum==3){
+          if(x>= 1025 && x<=1090){
+          while(this.basicData.data[i] != null) {
+            if(y>=(290+(allNum-i-1)*195) && y<=(310+(allNum-i-1)*195)){
+              this.showParamTable(i)
+            }
+            i++;
+          }
+          }
+        }
+        else{
           if(x>= 1025 && x<=1090){
           while(this.basicData.data[i] != null) {
             if(y>=(170+(allNum-i-1)*195) && y<=(190+(allNum-i-1)*195)){
@@ -374,16 +395,27 @@ export default {
             i++;
           }
         }
+        }
       }else{
-          while(this.basicData.data[i] != null) {
-            if(x>= 1025 && x<=1090 && y>=(70+(allNum-1-i)*125) && y<=(90+(allNum-1-i)*125)){
-              this.showParamTable(i)
+        if(allNum==6){
+            while(this.basicData.data[i] != null) {
+              if(x>= 1025 && x<=1090 && y>=(170+(allNum-1-i)*125) && y<=(190+(allNum-1-i)*125)){
+                this.showParamTable(i)
+              }
+              i++;
+              if(i==0)break;
             }
-            i++;
-            if(i==0)break;
           }
+        else{
+            while(this.basicData.data[i] != null) {
+              if(x>= 1025 && x<=1090 && y>=(70+(allNum-1-i)*125) && y<=(90+(allNum-1-i)*125)){
+                this.showParamTable(i)
+              }
+              i++;
+              if(i==0)break;
+            }
+          }  
       }
-      
     },
     selectTableRow(){
       return "tablerow"
@@ -596,8 +628,76 @@ export default {
       //按照组数调整参数
       // var startY,bengNum,bengzuNum,zoneNumX,zoneNumY,mpaX,mpaY,k;
       //根据组的数量调整
-      console.log(this.zoneNum)
+      console.log(allNum,99999)
       if(this.zoneNum){
+
+      if(allNum==2){
+          this.ctx.drawImage(this.image[0].data,419,255+(num-1)*195)
+        //几区
+        this.drawText(temp[allNum-num-1],1040,345+(num-1)*195,"black","18px")
+        this.drawText(parseFloat(this.basicData["泵组"+(allNum-num)+"区泵组出口压力"]).toFixed(2),1035,285+(num-1)*195)
+        //TODO 控制模式
+        if(this.basicData["泵组"+(allNum-num)+"区泵组运行"] == "true" || this.basicData["泵组"+(allNum-num)+"区泵组运行模式"] == "true"){
+            this.drawText("控制模式 自动",1020,365+(num-1)*195,"black","14px")
+        } else {
+            this.drawText("控制模式 手动",1020,365+(num-1)*195,"black","14px")
+        }
+        this.drawText("参数监控",1030,390+(num-1)*195,"black","14px")
+        this.drawStrokeRect(1025,375+(num-1)*195,65,20,{color:"gray"})
+        //超压报警
+        if(this.basicData["泵组"+(allNum-num)+"区泵组出口超压告警"] == "true"){
+          this.drawText("超压报警",1055,307+(num-1)*195,"red","14px")
+        }
+        //变线器断线
+        if(this.basicData["泵组"+(allNum-num)+"区压力变送器断线"] == "true"){
+          this.drawText("变线器断线",890,290+(num-1)*195,"red","14px")
+        }
+        //泵信息
+        for(var i=0;i<item.num;i++){
+          let x = this.adjustMargin(item.isFu,item.num)
+          console.log(x)
+          this.drawSingle(allNum-num,i+1,445+x*i,318+(num-1)*195)
+        }
+        if(item.isFu) {
+          let x = this.adjustMargin(item.isFu,item.num);
+          console.log("辅泵")
+          this.drawSmSingle(allNum-num,445+x*item.num,318+(num-1)*195)
+        }
+      }
+      else if(allNum==3){
+          this.ctx.drawImage(this.image[0].data,419,175+(num-1)*195)
+        //几区
+        this.drawText(temp[allNum-num-1],1040,265+(num-1)*195,"black","18px")
+        this.drawText(parseFloat(this.basicData["泵组"+(allNum-num)+"区泵组出口压力"]).toFixed(2),1035,205+(num-1)*195)
+        //TODO 控制模式
+        if(this.basicData["泵组"+(allNum-num)+"区泵组运行"] == "true" || this.basicData["泵组"+(allNum-num)+"区泵组运行模式"] == "true"){
+            this.drawText("控制模式 自动",1020,285+(num-1)*195,"black","14px")
+        } else {
+            this.drawText("控制模式 手动",1020,285+(num-1)*195,"black","14px")
+        }
+        this.drawText("参数监控",1030,310+(num-1)*195,"black","14px")
+        this.drawStrokeRect(1025,295+(num-1)*195,65,20,{color:"gray"})
+        //超压报警
+        if(this.basicData["泵组"+(allNum-num)+"区泵组出口超压告警"] == "true"){
+          this.drawText("超压报警",1055,227+(num-1)*195,"red","14px")
+        }
+        //变线器断线
+        if(this.basicData["泵组"+(allNum-num)+"区压力变送器断线"] == "true"){
+          this.drawText("变线器断线",890,210+(num-1)*195,"red","14px")
+        }
+        //泵信息
+        for(var i=0;i<item.num;i++){
+          let x = this.adjustMargin(item.isFu,item.num)
+          console.log(x)
+          this.drawSingle(allNum-num,i+1,445+x*i,238+(num-1)*195)
+        }
+        if(item.isFu) {
+          let x = this.adjustMargin(item.isFu,item.num);
+          console.log("辅泵")
+          this.drawSmSingle(allNum-num,445+x*item.num,238+(num-1)*195)
+        }
+      }
+      else{
         //bengzu.png
       this.ctx.drawImage(this.image[0].data,419,55+(num-1)*195)
       //几区
@@ -642,11 +742,46 @@ export default {
         console.log("辅泵")
         this.drawSmSingle(allNum-num,445+x*item.num,118+(num-1)*195)
       }
+      }
      
   
       //组数大于4的调整
       }else{
-         this.ctx.drawImage(this.image[8].data,419,15+(num-1)*125)
+        if(allNum==6){
+          this.ctx.drawImage(this.image[8].data,419,115+(num-1)*125)
+      //几区
+      this.drawText(temp[allNum-num-1],970,130+(num-1)*125,"black","18px")
+      this.drawText(parseFloat(this.basicData["泵组"+(allNum-num)+"区泵组出口压力"]).toFixed(2),875,177+(num-1)*125)
+      //TODO 控制模式
+      if(this.basicData["泵组"+(allNum-num)+"区泵组运行"] == "true" || this.basicData["泵组"+(allNum-num)+"区泵组运行模式"] == "true"){
+          this.drawText("控制模式 自动",1012,160+(num-1)*125,"black","14px")
+      } else {
+          this.drawText("控制模式 手动",1012,160+(num-1)*125,"black","14px")
+      }
+      this.drawText("参数监控",1030,185+(num-1)*125,"black","14px")
+      this.drawStrokeRect(1025,170+(num-1)*125,65,20,{color:"gray"})
+      //超压报警
+      if(this.basicData["泵组"+(allNum-num)+"区泵组出口超压告警"] == "true"){
+        this.drawText("超压报警",865,200+(num-1)*125,"red","14px")
+      }
+      //变线器断线
+      if(this.basicData["泵组"+(allNum-num)+"区压力变送器断线"] == "true"){
+        this.drawText("变线器断线",840,130+(num-1)*125,"red","14px")
+      }
+    //泵信息
+      for(var i=0;i<item.num;i++){
+        let x = this.adjustMargin(item.isFu,item.num)
+        console.log(x)
+        this.drawSingle(allNum-num,i+1,445+x*i,141+(num-1)*125)
+      }
+      if(item.isFu) {
+        let x = this.adjustMargin(item.isFu,item.num);
+        console.log("辅泵")
+        this.drawSmSingle(allNum-num,445+x*item.num,141+(num-1)*125)
+      }
+        }
+        else{
+this.ctx.drawImage(this.image[8].data,419,15+(num-1)*125)
       //几区
       this.drawText(temp[allNum-num-1],970,30+(num-1)*125,"black","18px")
       this.drawText(parseFloat(this.basicData["泵组"+(allNum-num)+"区泵组出口压力"]).toFixed(2),875,77+(num-1)*125)
@@ -691,6 +826,8 @@ export default {
         console.log("辅泵")
         this.drawSmSingle(allNum-num,445+x*item.num,41+(num-1)*125)
       }
+        }
+         
      }
     },
 
@@ -767,8 +904,13 @@ export default {
         this.ctx.drawImage(this.image[2].data,320+num*170,5)
         this.drawText(text+"通讯失败",370+num*170,27,"red","15px")
       }else{
-        this.ctx.drawImage(this.image[2].data,312,num*36-20,25,25)
-        this.drawText(text+"通讯失败",316,14+num*36,"red","11px")
+        if(num==0){//汞房通信失败
+          this.ctx.drawImage(this.image[2].data,442,5,28,28)
+          this.drawText(text+"通讯失败",469,25,"red","15px")
+        }else{
+        this.ctx.drawImage(this.image[2].data,312,num*35-20,25,25)
+        this.drawText(text+"通讯失败",316,14+num*35,"red","11px")
+        }
       }
     },
     //辅泵信息
