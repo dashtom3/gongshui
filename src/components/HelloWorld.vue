@@ -301,7 +301,7 @@ export default {
   //二组六泵 学警路
   created(){
       this.selectPlace = this.$route.params.id.split('&')[0]
-    this.getJson()
+    this.getAlert()
     this.getVideoJson()
 
   },
@@ -447,13 +447,11 @@ export default {
       });
 
     },
-    getJson(){
-      var self = this
-      axios.get("../static/place.json").then((res)=>{
-        self.treeData = self.analyseRegion(res.data)
-        self.baseTreeData = self.treeData
-        self.getAlertInfo()
-      })
+    getAlert(){
+      this.getAlertInfo()
+      setInterval(()=>{
+        this.getAlertInfo()
+      },10000)
     },
     getVideoJson(){
       var url = "http://111.61.241.172:10084?name="+this.selectPlace
@@ -491,37 +489,24 @@ export default {
     getAlertInfo(){
       var self = this
       global.apiGet(this,"getAlert",null).then(function(res){
-        var returnDate = []
+        self.alertOwnData = []
         Object.keys(res).forEach(function(key){
           var tempEntity = {}
           var temp = new Date(parseInt(res[key]))
           var tempKey = key.split(".")
-          tempEntity.day = temp.getFullYear()+"/"+(temp.getMonth()+1)+"/"+temp.getDate()
-          tempEntity.time = self.timeAdd(temp.getHours())+":"+self.timeAdd(temp.getMinutes())+":"+self.timeAdd(temp.getSeconds())
-          self.treeData.forEach(function(item){
-            item.children.forEach(function(item2){
-              // console.log(item2.label)
-              if(item2.label == tempKey[1]) {
-                tempEntity.place = item.label
-              }
-            })
-          })
-          tempEntity.room = tempKey[1]
-          tempEntity.params = tempKey[2]
-          tempEntity.alertG = "RootNode"
-          tempEntity.value = "true"
-          tempEntity.exvalue = "0"
-          tempEntity.text = tempKey[2]
-          tempEntity.type = "离散开"
-          tempEntity.case = "报警"
-          tempEntity.reason = ""
-          returnDate.push(tempEntity)
-        })
-        self.alertData = returnDate
-        self.alertOwnData = []
-        self.alertData.forEach(function(item){
-          if(item.room == "self.selectPlace"){
-            self.alertOwnData.push(item)
+          if(tempKey[1] == self.selectPlace){
+            tempEntity.day = temp.getFullYear()+"/"+(temp.getMonth()+1)+"/"+temp.getDate()
+            tempEntity.time = self.timeAdd(temp.getHours())+":"+self.timeAdd(temp.getMinutes())+":"+self.timeAdd(temp.getSeconds())
+            tempEntity.room = tempKey[1]
+            tempEntity.params = tempKey[2]
+            tempEntity.alertG = "RootNode"
+            tempEntity.value = "true"
+            tempEntity.exvalue = "0"
+            tempEntity.text = tempKey[2]
+            tempEntity.type = "离散开"
+            tempEntity.case = "报警"
+            tempEntity.reason = ""
+            self.alertOwnData.push(tempEntity)
           }
         })
       })
